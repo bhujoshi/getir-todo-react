@@ -31,17 +31,20 @@ export const TodoApp = () => {
     const todos = useSelector((state) => state.todos);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [isError, setIsError] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const dispatch = useDispatch();
     console.log({ todos })
     useEffect(() => {
-        fetch('http://localhost:5000/todos')
-            .then(response => response.json())
-            .then(data => { setIsLoading(false); dispatch(updateTodos(data)) })
-            .catch(() => {
-                setIsLoading(false);
-            })
+        (async () => {
+            try {
+                const data = await fetch('http://localhost:5000/todos')
+                    .then(response => response.json());
+                dispatch(updateTodos(data));
+            } catch (error) {
+                setError("Failed to load todo list. Please reload...")
+            }
+            setIsLoading(false);
+        })();
     }, [])
 
 
@@ -67,10 +70,11 @@ export const TodoApp = () => {
         <Container >
             {isLoading ? 'Loading.....' :
                 <>
+                    {error && <p style={{color: 'red'}}> {error}</p>}
                     <Button
                         variant="contained"
-                        onClick={() => { 
-                            (async ()=>{
+                        onClick={() => {
+                            (async () => {
                                 setIsSaving(true);
                                 const updatedTodos = await saveTodoData(todos);
                                 dispatch(updateTodos(updatedTodos));
